@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joy's Café Search</title>
+    <style>
+        /* Basic styling */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: aqua;
+        }
+
+        #search-box {
+            width: 300px;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+      h1{
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <h1 >Joy's Café Search</h1>
+
+    <!-- Search input box -->
+    <input type="text" id="search-box" placeholder="Search for a cafe..." oninput="filterCafes()" text-align="center">
+
+    <!-- Cafes list table -->
+    <table id="cafes-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Location</th>
+                <th>Rating</th>
+                <th>Place Type</th> <!-- New column to display place type -->
+            </tr>
+        </thead>
+        <tbody id="cafes-body">
+            <!-- Dynamic content will be populated here -->
+        </tbody>
+    </table>
+
+    <script>
+        let cafes = [];
+        let places = [];
+        
+        // Fetch cafes and places data on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchCafesData();
+            fetchPlacesData();
+        });
+
+        // Fetch cafes data
+        function fetchCafesData() {
+            fetch('https://raw.githubusercontent.com/debojyoti/places-fake-rest-api/master/cafes.json')
+                .then(response => response.json())
+                .then(data => {
+                    cafes = data.cafes; // Store cafes data
+                    displayCafes(cafes); // Display all cafes initially
+                })
+                .catch(error => console.error('Error fetching cafes data:', error));
+        }
+
+        // Fetch places data
+        function fetchPlacesData() {
+            fetch('https://raw.githubusercontent.com/debojyoti/places-fake-rest-api/master/places.json')
+                .then(response => response.json())
+                .then(data => {
+                    places = data.places; // Store places data
+                })
+                .catch(error => console.error('Error fetching places data:', error));
+        }
+
+        // Function to display cafes in the table
+        function displayCafes(cafesList) {
+            const cafesBody = document.getElementById('cafes-body');
+            cafesBody.innerHTML = ''; // Clear previous content
+
+            // Loop through the cafes list and create table rows
+            cafesList.forEach(cafe => {
+                const row = document.createElement('tr');
+                
+                const nameCell = document.createElement('td');
+                nameCell.textContent = cafe.name;
+                
+                const locationCell = document.createElement('td');
+                locationCell.textContent = cafe.location;
+                
+                const ratingCell = document.createElement('td');
+                ratingCell.textContent = cafe.rating;
+
+                // Find place type based on the cafe's location using places data
+                const placeType = findPlaceType(cafe.location);
+                
+                const placeTypeCell = document.createElement('td');
+                placeTypeCell.textContent = placeType;
+                
+                row.appendChild(nameCell);
+                row.appendChild(locationCell);
+                row.appendChild(ratingCell);
+                row.appendChild(placeTypeCell);
+                
+                cafesBody.appendChild(row);
+            });
+        }
+
+        // Function to filter cafes based on search query
+        function filterCafes() {
+            const searchQuery = document.getElementById('search-box').value.toLowerCase();
+            const filteredCafes = cafes.filter(cafe => cafe.name.toLowerCase().includes(searchQuery));
+            displayCafes(filteredCafes);
+        }
+
+        // Function to find the place type for a given location
+        function findPlaceType(location) {
+            const place = places.find(place => place.name === location);
+            return place ? place.type : 'Unknown';
+        }
+    </script>
+</body>
+
+</html>

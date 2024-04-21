@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resource Management System</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background-color: yellow;
+}
+
+.container {
+    width: 80%;
+    margin: 0 auto;
+}
+
+.overview {
+    margin-bottom: 20px;
+}
+
+.overview-section {
+    display: flex;
+    justify-content: space-between;
+}
+
+.listing {
+    margin-top: 30px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+}
+
+tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 50%;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover, .close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+h2{
+    text-align: center;
+}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="overview">
+<h2 text-align="center">Dashboard Overview</h2>
+<div class="overview-section">
+<h3>Total Employees: <span id="totalEmployees">0</span></h3>
+<h3>Available Employees: <span id="availableEmployees">0</span></h3>
+</div>
+</div>
+<div class="listing">
+<h2>Employee Listing</h2>
+<input type="text" id="searchInput" placeholder="Search by name or designation...">
+<button onclick="addEmployee()">Add Employee</button>
+<table id="employeeTable">
+<thead>
+<tr>
+<th>Name</th>
+<th>Age</th>
+<th>Designation</th>
+<th>Department</th>
+<th>Available</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody id="employeeList"></tbody>
+</table>
+</div>
+</div>
+<div id="addEmployeeModal" class="modal">
+<div class="modal-content">
+<span class="close" onclick="closeModal()">&times;</span>
+<h2>Add Employee</h2>
+<input type="text" id="name" placeholder="Name" required>
+<input type="number" id="age" placeholder="Age" required>
+<input type="text" id="designation" placeholder="Designation" required>
+<select id="department" required>
+<option value="" disabled selected>Select Department</option>
+<option value="Frontend Development">Frontend Development</option>
+<option value="Backend Development">Backend Development</option>
+<option value="Testing">Testing</option>
+<option value="Deployment">Deployment</option>
+</select>
+<button onclick="saveEmployee()">Save</button>
+</div>
+</div>
+<div id="editEmployeeModal" class="modal">
+<div class="modal-content">
+<span class="close" onclick="closeModal()">&times;</span>
+<h2>Edit Employee</h2>
+<input type="text" id="editName" placeholder="Name" required>
+<input type="number" id="editAge" placeholder="Age" required>
+<input type="text" id="editDesignation" placeholder="Designation" required>
+<select id="editDepartment" required>
+<option value="" disabled selected>Select Department</option>
+<option value="Frontend Development">Frontend Development</option>
+<option value="Backend Development">Backend Development</option>
+<option value="Testing">Testing</option>
+<option value="Deployment">Deployment</option>
+</select>
+<button onclick="updateEmployee()">Update</button>
+</div>
+</div>
+
+<script>
+let employees = JSON.parse(localStorage.getItem('employees')) || [];
+
+function updateLocalStorage() {
+    localStorage.setItem('employees', JSON.stringify(employees));
+}
+
+function displayEmployees() {
+    const employeeList = document.getElementById('employeeList');
+    employeeList.innerHTML = '';
+    let availableCount = 0;
+
+    employees.forEach((employee, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${employee.name}</td>
+            <td>${employee.age}</td>
+            <td>${employee.designation}</td>
+            <td>${employee.department}</td>
+            <td>${employee.available ? 'Yes' : 'No'}</td>
+            <td>
+                <button onclick="editEmployee(${index})">&#9998;</button>
+                <button onclick="deleteEmployee(${index})">&#128465;</button>
+            </td>
+        `;
+        employeeList.appendChild(row);
+
+        if (employee.available) {
+            availableCount++;
+        }
+    });
+
+    document.getElementById('totalEmployees').textContent = employees.length;
+    document.getElementById('availableEmployees').textContent = availableCount;
+}
+
+function addEmployee() {
+    document.getElementById('addEmployeeModal').style.display = 'block';
+}
+
+function saveEmployee() {
+    const name = document.getElementById('name').value.trim();
+    const age = document.getElementById('age').value.trim();
+    const designation = document.getElementById('designation').value.trim();
+    const department = document.getElementById('department').value.trim();
+
+    if (name && age && designation && department) {
+        if (!isNaN(age)) {
+            const employee = {
+                name,
+                age: parseInt(age),
+                designation,
+                department,
+                available: true
+            };
+
+            employees.unshift(employee);
+            updateLocalStorage();
+            closeModal();
+            displayEmployees();
+            alert('Employee added successfully!');
+        } else {
+            alert('Age must be a number!');
+        }
+    } else {
+        alert('All fields are mandatory!');
+    }
+}
+
+function editEmployee(index) {
+    const employee = employees[index];
+    document.getElementById('editName').value = employee.name;
+    document.getElementById('editAge').value = employee.age;
+    document.getElementById('editDesignation').value = employee.designation;
+    document.getElementById('editDepartment').value = employee.department;
+
+    document.getElementById('editEmployeeModal').style.display = 'block';
+    document.getElementById('editEmployeeModal').dataset.index = index;
+}
+
+function updateEmployee() {
+    const index = parseInt(document.getElementById('editEmployeeModal').dataset.index);
+    const name = document.getElementById('editName').value.trim();
+    const age = document.getElementById('editAge').value.trim();
+    const designation = document.getElementById('editDesignation').value.trim();
+    const department = document.getElementById('editDepartment').value.trim();
+
+    if (name && age && designation && department) {
+        if (!isNaN(age)) {
+            employees[index] = {
+                name,
+                age: parseInt(age),
+                designation,
+                department,
+                available: employees[index].available
+            };
+
+            updateLocalStorage();
+            closeModal();
+            displayEmployees();
+            alert('Employee updated successfully!');
+        } else {
+            alert('Age must be a number!');
+        }
+    } else {
+        alert('All fields are mandatory!');
+    }
+}
+
+function deleteEmployee(index) {
+    if (confirm('Are you sure you want to delete this employee?')) {
+        employees.splice(index, 1);
+        updateLocalStorage();
+        displayEmployees();
+        alert('Employee deleted successfully!');
+    }
+}
+
+function closeModal() {
+    document.getElementById('addEmployeeModal').style.display = 'none';
+    document.getElementById('editEmployeeModal').style.display = 'none';
+}
+
+function filterEmployees() {
+    const searchInput = document.getElementById('searchInput').value.trim().toLowerCase();
+    const filteredEmployees = employees.filter(employee =>
+        employee.name.toLowerCase().includes(searchInput) ||
+        employee.designation.toLowerCase().includes(searchInput)
+    );
+
+    displayEmployees(filteredEmployees);
+}
+
+window.onload = function() {
+    displayEmployees();
+};
+</script>
+</body>
+</html>
